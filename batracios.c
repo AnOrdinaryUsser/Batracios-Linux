@@ -55,12 +55,13 @@ int main (int argc, char *argv[]){
     write(2,"Error en BATR_inicio",strlen("Error en BATR_inicio"));
     exit(4);
   }
+  pause();
 
   //Manejadora de CTRL-C
   //Borra y libera semaforo
   //Manda un SIGINT
   shmdt(ptr);
-  semctl(mem, IPC_RMID, NULL);
+  semctl(mem, IPC_RMID, 0);
 	semctl(sem, 0, IPC_RMID);
   return 0;
 }
