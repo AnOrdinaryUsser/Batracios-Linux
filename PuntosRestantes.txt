@@ -1,14 +1,8 @@
-Llamar a la función BATR_inicio en main.
-Debe aparecer la pantalla de bienvenida y, pasados dos segundos, dibujarse la pantalla.
-Añadid también la función BATR_fin
-
-Probad a que el padre mueva los troncos en la pantalla
-
 Dejad para las siguientes pruebas, los troncos quietos
 
 Cread los procesos de las ranas madre.
 Observad cómo se produce un error porque la segunda cría
-de una madre aparece encima de la anterior,porque no se mueve
+de una madre aparece encima de la anterior, porque no se mueve
 
 Haced que las ranitas nacidas se muevan, en principio solamente hacia adelante
 

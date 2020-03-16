@@ -5,6 +5,7 @@
 #include <sys/shm.h>
 #include <unistd.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 #include <sys/ipc.h>
 #include <signal.h>
 #include <time.h>
@@ -20,7 +21,7 @@ union semun{
 	struct semid_ds *buf;
 };
 */
-int sem,mem;
+int sem, mem, noTerminado=1;
 char *ptr;
 //struct sembuf sems;
 
@@ -29,7 +30,7 @@ char *ptr;
 /* =======================FUNCIONES========================== */
 /* ========================================================== */
 void INTHANDLER(int retorno);
-
+void finPrograma(void);
 
 /* ===================================================== */
 /* =======================MAIN========================== */
@@ -38,7 +39,8 @@ int main (int argc, char *argv[]){
   int lTroncos[7]={1,1,1,1,1,1,1};
   int lAguas[7]={1,1,1,1,1,1,1};
   int dirs[7]={1,1,1,1,1,1,1};
-  int param1, param2;
+  int param1, param2, nTroncos, j;
+  int *movX, *movY;
   char errorLineaOrdenes[] = "USO: ./batracios VEL VEL_PARTO\n";
 
   //MANEJADORA SIGINT
@@ -98,6 +100,28 @@ int main (int argc, char *argv[]){
     exit(4);
   }
 
+  while (noTerminado) {
+    //MOVIMIENTO TRONCOS
+    for (nTroncos = 0; nTroncos < 7; nTroncos++){
+      if(BATR_avance_troncos(nTroncos)==-1){
+        perror("Error avance troncos bro.");
+      }
+      //Hay 7 tronquitos
+      BATR_avance_troncos(5);
+      BATR_pausita();
+    }
+
+/*
+    for (j=0;j<25;j++) {
+      dx = (int*)(mem+2048+j*8);
+      dy = (int*)(mem+2048+j*8+4);
+        if((*dy) == 10-nTroncos){
+          if(dirs[nTroncos]==0) (*dx)++;
+            else (*dx)--;
+        }
+    }*/
+  } // Fin del bucle  while
+  finPrograma();
   return 0;
 }
 
@@ -105,13 +129,21 @@ int main (int argc, char *argv[]){
 /* =======================FUNCIONES========================== */
 /* ========================================================== */
 void INTHANDLER(int retorno){
+  noTerminado = 0;
+}
 
+
+void finPrograma(void) {
+  int i;
   // Llamada a BATR_fin
   if (BATR_fin() == -1) {
           fprintf(stderr, "Finalización incorrecta del programa\n");
           fflush(stderr);
           exit(1);
   }
+
+  //Espera a que terminen las 4 ranas
+  for (i = 0; i < 4; i++) wait(NULL);
 
   //Borra y libera semaforo
   shmdt(ptr);
