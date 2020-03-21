@@ -1,9 +1,4 @@
-//Semaforo memoria compartida (l 281)
-//Mascaras?
-//Revisar bucle troncos
-//Revisar los perror (identificativos)
-//Revisar nombres variables
-//COMPROBAR QUE LO QUE HEMOS METIDO FUNCIONA
+//Revisar funcion ranita
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -23,7 +18,6 @@
 /* =================================================================== */
 
 // UNION - Necesario para la correcta ejecución en encina
-
 union semun{
   int val;
 	struct semid_ds *buf;
@@ -35,14 +29,11 @@ int *r_nacidas, *r_perdidas, *r_salvadas;
 
 struct sembuf sems;
 
-
-
 /* ========================================================== */
 /* =======================FUNCIONES========================== */
 /* ========================================================== */
 void INTHANDLER(int retorno);
 void finPrograma(void);
-void antiZombies(int status);
 
 /* ===================================================== */
 /* =======================MAIN========================== */
@@ -64,7 +55,7 @@ int main (int argc, char *argv[]){
   char errorLineaOrdenes[] = "USO: ./batracios VELOCIDAD VELOCIDAD_PARTO\n";
 
   // Declaración de sems
-	union semun sem_0, sem_1, sem_2, sem_3, sem_4, sem_5;
+	union semun sem_0, sem_1, sem_2, sem_3, sem_4, sem_5, sem_6, sem_7, sem_8, sem_9;
 
 	sem_0.val = 25;
 	sem_1.val = 1;
@@ -72,6 +63,10 @@ int main (int argc, char *argv[]){
 	sem_3.val = 1;
 	sem_4.val = 1;
   sem_5.val = 1;
+  sem_6.val = 1;
+  sem_7.val = 1;
+  sem_8.val = 1;
+  sem_9.val = 1;
 
   /* ============= Comprobacion de parametros ============= */
 
@@ -161,6 +156,29 @@ int main (int argc, char *argv[]){
 		exit(3);
 	}
 
+  //Semáforo para controlar que las ranas no se choquen
+  if(semctl(sem,6,SETVAL,sem_6)==-1){
+      perror("error al inicializar el semaforo 6");
+      exit(2);
+  }
+
+  //Semáforo para controlar ranas nacidas
+  if(semctl(sem,7,SETVAL,sem_7)==-1){
+      perror("error al inicializar el semaforo 7");
+      exit(2);
+  }
+
+  //Semáforo para controlar ranas salvadas
+  if(semctl(sem,8,SETVAL,sem_8)==-1){
+      perror("error al inicializar el semaforo 8");
+      exit(2);
+  }
+
+  //Semáforo para controlar ranas muertas
+  if(semctl(sem,9,SETVAL,sem_9)==-1){
+      perror("error al inicializar el semaforo 9");
+      exit(2);
+  }
 	/* ============= Inicio del programa con BATR_inicio ============= */
 
   if(BATR_inicio(param1, sem, lTroncos, lAguas, dirs, param2, ptr) != 0){
@@ -191,7 +209,7 @@ int main (int argc, char *argv[]){
         if(sigaction(SIGINT,&handler,NULL)==-1) exit(1);
 
 				// Manejadora anti-zombies
-				handler.sa_handler = antiZombies;
+				handler.sa_handler = SIG_IGN;
 				sigemptyset( &handler.sa_mask);
 				handler.sa_flags = 0;
 				sigaddset( &handler.sa_mask, SIGINT);
@@ -261,33 +279,14 @@ int main (int argc, char *argv[]){
                   if (sigaction(SIGINT, & handler, NULL) == -1) exit(1);
 
                   // Manejara anti-Zombies
-                  handler.sa_handler = antiZombies;
+                  handler.sa_handler = SIG_IGN;
                   sigemptyset( & handler.sa_mask);
                   handler.sa_flags = 0;
                   sigaddset( & handler.sa_mask, SIGINT);
                   if (sigaction(SIGCHLD, & handler, NULL) == -1) exit(1);
 
                   // Creación de ranitas (j,nRana)
-
-
-//
-//
-//      ,---,
-//    .'  .' `\                              ,---,                                ,----.                   ,--,
-//  ,---.'     \                           ,---.'|                               /   /  \-.         ,--, ,--.'|
-//  |   |  .`\  |            .--.--.       |   | :                              |   :    :|       ,'_ /| |  |,
-//  :   : |  '  |   ,---.   /  /    '      |   | |   ,---.             ,--.--.  |   | .\  .  .--. |  | : `--'_
-//  |   ' '  ;  :  /     \ |  :  /`./    ,--.__| |  /     \           /       \ .   ; |:  |,'_ /| :  . | ,' ,'|
-//  '   | ;  .  | /    /  ||  :  ;_     /   ,'   | /    /  |         .--.  .-. |'   .  \  ||  ' | |  . . '  | |
-//  |   | :  |  '.    ' / | \  \    `. .   '  /  |.    ' / |          \__\/: . . \   `.   ||  | ' |  | | |  | :
-//  '   : | /  ; '   ;   /|  `----.   \'   ; |:  |'   ;   /|          ," .--.; |  `--'""| |:  | : ;  ; | '  : |__
-//  |   | '` ,/  '   |  / | /  /`--'  /|   | '/  ''   |  / |         /  /  ,.  |    |   | |'  :  `--'   \|  | '.'|
-//  ;   :  .'    |   :    |'--'.     / |   :    :||   :    |        ;  :   .'   \   |   | ::  ,      .-./;  :    ;
-//  |   ,.'       \   \  /   `--'---'   \   \  /   \   \  /         |  ,     .-./   `---'.| `--`----'    |  ,   /
-//  '---'          `----'                `----'     `----'           `--`---'         `---`               ---`-'
-//
-
-
+                  // DEBUG REVISAR DESDE AQUÍ
                   ptr = (char*) shmat(mem, NULL, 0);
 
                   while (noTerminado) {
@@ -306,7 +305,7 @@ int main (int argc, char *argv[]){
                     // Se comprueba que si se sale de los bytes de la pantalla (horizontal)
                     // Se utiliza para comprobar que no se salen entre que paren y llegan a los troncos
                     if((*movX) < 0 || (*movX) > 79){
-                      sems.sem_num = 10;  //sem de control de memoria compartida
+                      sems.sem_num = 5;  //sem de control de memoria compartida
                       sems.sem_op = 1;
                       sems.sem_flg = 0;
                       if(semop(sem,&sems,1) == -1) perror("Error sem de memoria compartida: ");
@@ -344,7 +343,8 @@ int main (int argc, char *argv[]){
 
                     BATR_pausa();
 
-            		    sems.sem_num = 10;  //sem de control de memoria compartida
+                    //Sem de control de memoria compartida
+            		    sems.sem_num = 5;
                     sems.sem_op = -1;
                     sems.sem_flg = 0;
                     if(semop(sem,&sems,1) == -1){
@@ -359,7 +359,7 @@ int main (int argc, char *argv[]){
                     //cuando ya están en los troncos
                     if((*movX) < 0 || (*movX) > 79){
                         //sem de control de memoria compartida
-                        sems.sem_num = 10;
+                        sems.sem_num = 5;
                         sems.sem_op = 1;
                         sems.sem_flg = 0;
                         if(semop(sem,&sems,1) == -1) perror("Error sem de memoria compartida: ");
@@ -377,7 +377,7 @@ int main (int argc, char *argv[]){
                       sems.sem_num = 5;  //semaforo de control de memoria compartida
                       sems.sem_op = 1;
                       sems.sem_flg = 0;
-                      if(semop(sem,&sems,1) == -1) perror("Error semaforo de memoria compartida: ");
+                      if(semop(sem,&sems,1) == -1) perror("Error semaforo de memoria compartida (1): ");
           			      (*r_salvadas) ++;
                       (*movY) = -1;
                       (*movX) = -1;
@@ -396,14 +396,16 @@ int main (int argc, char *argv[]){
                     sems.sem_num = 5;
                     sems.sem_op = 1;
                     sems.sem_flg = 0;
-                    if(semop(sem,&sems,1) == -1) perror("Error semaforo de memoria compartida: ");
+                    if(semop(sem,&sems,1) == -1) perror("Error semaforo de memoria compartida (2): ");
                   } // While infinito
 
                   sems.sem_num = 0;  //semaforo de control de procesos maximos
                   sems.sem_op=1;
                   sems.sem_flg=0;
                   if(semop(sem,&sems,1)==-1) perror("Error semaforo de control de procesos: ");
-                  break;
+
+                  //break;
+                  // DEBUG REVISAR HASTA AQUÍ
 
                   if(j==24){
           					sems.sem_num = 0;  //semaforo de control de procesos maximos
@@ -415,14 +417,7 @@ int main (int argc, char *argv[]){
                   sems.sem_num = 5;  //semaforo de control de memoria compartida
                   sems.sem_op = 1;
                   sems.sem_flg = 0;
-                  if(semop(sem,&sems,1) == -1) perror("Error semaforo de memoria compartida: ");
-
-
-                  //   _   _    __    ___  ____   __        __    _____  __  __  ____
-                  //  ( )_( )  /__\  / __)(_  _) /__\      /__\  (  _  )(  )(  )(_  _)
-                  //   ) _ (  /(__)\ \__ \  )(  /(__)\    /(__)\  )(_)(  )(__)(  _)(_
-                  //  (_) (_)(__)(__)(___/ (__)(__)(__)  (__)(__)(___/\\(______)(____)
-
+                  if(semop(sem,&sems,1) == -1) perror("Error semaforo de memoria compartida (3): ");
 
                 default:
                   break;
@@ -433,25 +428,37 @@ int main (int argc, char *argv[]){
       } // Fin del switch
     } // Fin del for de nRana
 
+  //MOVIMIENTO TRONCOS
   while (noTerminado) {
-	   //MOVIMIENTO TRONCOS
-  	for (nTroncos = 0; nTroncos < 7; nTroncos++){
-    	if(BATR_avance_troncos(nTroncos)==-1){
-      	perror("Error avance troncos bro.");
-    	}
-    	//Hay 7 tronquitos
-    	BATR_avance_troncos(5);
-    	BATR_pausita();
-  	}
+    for(nTroncos=0; nTroncos < 7; nTroncos++){
+      //Semaforo de control de memoria compartida
+      sems.sem_num = 5;
+      sems.sem_op = -1;
+      sems.sem_flg = 0;
+      if(semop(sem,&sems,1) == -1){
+       if(errno==EINTR) break;
+       perror("Error semaforo de choque: ");
+      }
 
-  	for (j=0;j<25;j++) {
-    	movX = (int*)(ptr+2048+j*8);
-    	movY = (int*)(ptr+2048+j*8+4);
-      	if((*movY) == 10-nTroncos){
-        	if(dirs[nTroncos]==0) (*movX)++;
-          	else (*movX)--;
-      	}
-  	}
+      if(BATR_avance_troncos(nTroncos)==-1) perror("Error: No pudieron avanzar los troncos de la fila 0");
+
+      for(j=0;j<25;j++) {
+         movX = (int*)(ptr+2048+j*8);
+         movY = (int*)(ptr+2048+j*8+4);
+
+         if((*movY) == 10-nTroncos){
+             if(dirs[nTroncos]==0) (*movX)++;
+             else (*movX)--;
+         }
+      }
+
+      sems.sem_num = 5;  //semaforo de control de memoria compartida
+      sems.sem_op = 1;
+      sems.sem_flg = 0;
+      if(semop(sem,&sems,1)==-1) perror("Error semaforo de choque: ");
+
+      if(BATR_pausita()==-1) perror("Error: No se pudo realizar \"pausita\" de la fila 0");
+    }
   } // Fin del bucle  while
   finPrograma();
   return 0;
@@ -466,31 +473,34 @@ void INTHANDLER(int retorno){
 
 
 void finPrograma(void){
-  int nRana;
-  // Llamada a BATR_fin
+  int i;
+
   if (BATR_fin() == -1) {
-      	fprintf(stderr, "Finalización incorrecta del programa\n");
-      	fflush(stderr);
-      	exit(1);
+      fprintf(stderr, "Error: No se pudo finalizar BATR_fin\n");
+      fflush(stderr);
+      exit(1);
   }
 
-  //Espera a que terminen las 4 ranas
-  for (nRana = 0; nRana < 4; nRana++) wait(NULL);
+  for(i=0;i<4;i++) wait(NULL);
 
-  //Borra y libera sem
-  shmdt(ptr);
+  //Semaforo de control de procesos máximos
+  sems.sem_num = 0;
+  sems.sem_op = -25;
+  sems.sem_flg = 0;
+  if(semop(sem,&sems,1) == -1){
+    if(errno == EINTR) perror("Se ha producido una interrupcion: ");
+    perror("Error semaforo de memoria compartida (4): ");
+  }
 
-  if(semctl(sem, 0, IPC_RMID)==-1){
-	perror("Error al destruir un sem\n");
-  } else write(2,"Liberando sems.\n",strlen("Liberando sems.\n"));
+  if(BATR_comprobar_estadIsticas(*r_nacidas, *r_salvadas, *r_perdidas)==-1) perror("Error: No ha funcionado \"estadisticas\"\n");
 
-  if(shmctl(mem, IPC_RMID, 0)==-1){
-	perror("Error al liberar memora compartida.\n");
-  } else write(2,"Liberando mem compartida.\n",strlen("Liberando mem compartida.\n"));
+  if (semctl(sem, 0, IPC_RMID) == -1) perror("Error: NO se pudo destruir el semaforo.\n");
+  else printf("Semaforo destruido.\n");
+
+  if (shmctl(mem, IPC_RMID, 0) == -1) {
+      perror("No se ha podido destruir la memoria compartida");
+      exit(1);
+  }else printf("Memoria compartida destruida\n");
 
   exit(1);
-}
-
-void antiZombies(int status) {
- wait(&status);
 }
