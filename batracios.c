@@ -291,179 +291,174 @@ int main (int argc, char*argv[]){
 							if(BATR_parto_ranas(i,movX,movY)==-1) perror("Error: No se realizo parto_ranas en la rana 0");
 							(*r_nacidas) ++;
 
-							f = fork();
-							if(f == -1){
-							perror("Error: No se pudo crear una ranita");
-							exit(1);
-							}
-							else if(f == 0){
-
-							ac.sa_handler = intHandler;
-							sigemptyset(&ac.sa_mask);
-							ac.sa_flags = 0;
-							sigaddset(&ac.sa_mask, SIGINT);
-							if (sigaction(SIGINT, &ac, NULL) == -1) {
-							perror("Padre: SIGINT\n");
-							exit(1);
-							}
-
-
-							ac.sa_handler = SIG_IGN;
-							sigemptyset(&ac.sa_mask);
-							ac.sa_flags = 0;
-							sigaddset(&ac.sa_mask, SIGINT);
-							if (sigaction(SIGCHLD, &ac, NULL) == -1) {
-							perror("Padre: SIGINT\n");
-							exit(1);
-							}
-							/* ==================================================================================== */
-							sems.sem_num= 6;
-							sems.sem_op = -1;
-							sems.sem_flg = 0;
-							if(semop(sem,&sems,1)==-1){
-							perror("Error sem de control de procesos en el ranitas: ");
-							}
-							//ranita(j, i);
-							//ptr=shmat(mem,NULL,0);
-
-							while(!noTerminado){
-								//////////////////////////
-								//MOVIMIENTO HACIA TRONCOS
-								//////////////////////////
-
-								//Semaforo procesos máximos
-								sems.sem_num = 1;
-								sems.sem_op = -1;
-								sems.sem_flg = 0;
-								if(semop(sem,&sems,1)==-1) perror("Error sem de control de procesos en el ranitas: ");
-								//Sem de control de mem compartida
-								sems.sem_num = 10;
-								sems.sem_op = -1;
-								sems.sem_flg = 0;
-								if(semop(sem,&sems,1) == -1){
-									if(errno==EINTR) break;
-									perror("Error sem de mem compartida: ");
-								}
-
-								movX = (int*)(ptr+2048+j*8);
-								movY = (int*)(ptr+2048+j*8+4);
-
-								if((*movX) < 0 || (*movX) > 79) { //ERROR RANITA SE SALE DEL PARTO DE RANA
-									//sem de control de mem compartida
-									sems.sem_num = 10;
-									sems.sem_op = 1; //SIGNAL libera mem compartida
-									sems.sem_flg = 0;
-									if(semop(sem,&sems,1) == -1) perror("Error sem de mem compartida: ");
-									(*r_perdidas) ++;
-									(*movY) = -1;
-									(*movX) = -1;
-									break; //Pasaría a la siguiente iteración.
-								}
-
-
-								//PREGUNTA SI PUEDE SALTAR
-								if(BATR_puedo_saltar((int)(*movX),(int)(*movY),ARRIBA)==0) sentido = ARRIBA;
-								else if(BATR_puedo_saltar((int)(*movX),(int)(*movY),IZQUIERDA)==0) sentido = IZQUIERDA;
-								else if(BATR_puedo_saltar((int)(*movX),(int)(*movY),DERECHA)==0) sentido = DERECHA;
-								else{
-									//Si no puede avanzar
-									sems.sem_num = 10;
-									sems.sem_op = 1; //Libera la mem compartida
-									sems.sem_flg = 0;
-									if(semop(sem,&sems,1) == -1) perror("Error sem de mem compartida: ");
-									BATR_pausa();
-									continue;
-								}
-
-								//SUPOSICIÓN AVANCE RANA
-								if(BATR_avance_rana_ini((int)(*movX),(int)(*movY))==-1){
-									perror("Error: Avance rana.\n");
+							switch(fork()){
+								case -1:
+									perror("Error: No se pudo crear una ranita");
 									exit(1);
-								}
-								if(BATR_avance_rana((int*)movX,(int*)movY,sentido)==-1){
-									perror("Error: Avance rana.\n");
-									exit(1);
-								}
-								sems.sem_num = 10;  //sem de control de mem compartida
-								sems.sem_op = 1;
-								sems.sem_flg = 0;
-								if(semop(sem,&sems,1) == -1) perror("Error sem de mem compartida: ");
-								BATR_pausa();
 
-								/////////////////////////////
-								//MOVIMIENTO SALTO A TRONCOS
-								////////////////////////////
+								case 0:
+									ac.sa_handler = intHandler;
+									sigemptyset(&ac.sa_mask);
+									ac.sa_flags = 0;
+									sigaddset(&ac.sa_mask, SIGINT);
+									if (sigaction(SIGINT, &ac, NULL) == -1) {
+										perror("Padre: SIGINT\n");
+										exit(1);
+									}
 
-								//Abre sección crítica
-								sems.sem_num = 10;  //sem de control de mem compartida
-								sems.sem_op = -1;
-								sems.sem_flg = 0;
-								if(semop(sem,&sems,1) == -1){
-									if(errno==EINTR) break;
-									perror("Error sem de mem compartida: ");
-								}
-								movX = (int*)(ptr+2048+j*8);
-								movY = (int*)(ptr+2048+j*8+4);
-								if((*movX) < 0 || (*movX) > 79) {
-									sems.sem_num = 10;  //sem de control de mem compartida
+									ac.sa_handler = SIG_IGN;
+									sigemptyset(&ac.sa_mask);
+									ac.sa_flags = 0;
+									sigaddset(&ac.sa_mask, SIGINT);
+									if (sigaction(SIGCHLD, &ac, NULL) == -1) {
+										perror("Padre: SIGINT\n");
+										exit(1);
+									}
+									/* ==================================================================================== */
+									sems.sem_num= 6;
+									sems.sem_op = -1;
+									sems.sem_flg = 0;
+									if(semop(sem,&sems,1)==-1){
+									perror("Error sem de control de procesos en el ranitas: ");
+									}
+									//ranita(j, i);
+									//ptr=shmat(mem,NULL,0);
+
+									while(!noTerminado){
+										//////////////////////////
+										//MOVIMIENTO HACIA TRONCOS
+										//////////////////////////
+
+										//Semaforo procesos máximos
+										sems.sem_num = 1;
+										sems.sem_op = -1;
+										sems.sem_flg = 0;
+										if(semop(sem,&sems,1)==-1) perror("Error sem de control de procesos en el ranitas: ");
+										//Sem de control de mem compartida
+										sems.sem_num = 10;
+										sems.sem_op = -1;
+										sems.sem_flg = 0;
+										if(semop(sem,&sems,1) == -1){
+											if(errno==EINTR) break;
+											perror("Error sem de mem compartida: ");
+										}
+
+										movX = (int*)(ptr+2048+j*8);
+										movY = (int*)(ptr+2048+j*8+4);
+
+										if((*movX) < 0 || (*movX) > 79) { //ERROR RANITA SE SALE DEL PARTO DE RANA
+											//sem de control de mem compartida
+											sems.sem_num = 10;
+											sems.sem_op = 1; //SIGNAL libera mem compartida
+											sems.sem_flg = 0;
+											if(semop(sem,&sems,1) == -1) perror("Error sem de mem compartida: ");
+											(*r_perdidas) ++;
+											(*movY) = -1;
+											(*movX) = -1;
+											break; //Pasaría a la siguiente iteración.
+										}
+
+
+										//PREGUNTA SI PUEDE SALTAR
+										if(BATR_puedo_saltar((int)(*movX),(int)(*movY),ARRIBA)==0) sentido = ARRIBA;
+										else if(BATR_puedo_saltar((int)(*movX),(int)(*movY),IZQUIERDA)==0) sentido = IZQUIERDA;
+										else if(BATR_puedo_saltar((int)(*movX),(int)(*movY),DERECHA)==0) sentido = DERECHA;
+										else{
+											//Si no puede avanzar
+											sems.sem_num = 10;
+											sems.sem_op = 1; //Libera la mem compartida
+											sems.sem_flg = 0;
+											if(semop(sem,&sems,1) == -1) perror("Error sem de mem compartida: ");
+											BATR_pausa();
+											continue;
+										}
+
+										//SUPOSICIÓN AVANCE RANA
+										if(BATR_avance_rana_ini((int)(*movX),(int)(*movY))==-1){
+											perror("Error: Avance rana.\n");
+											exit(1);
+										}
+										if(BATR_avance_rana((int*)movX,(int*)movY,sentido)==-1){
+											perror("Error: Avance rana.\n");
+											exit(1);
+										}
+										sems.sem_num = 10;  //sem de control de mem compartida
+										sems.sem_op = 1;
+										sems.sem_flg = 0;
+										if(semop(sem,&sems,1) == -1) perror("Error sem de mem compartida: ");
+										BATR_pausa();
+
+										/////////////////////////////
+										//MOVIMIENTO SALTO A TRONCOS
+										////////////////////////////
+
+										//Abre sección crítica
+										sems.sem_num = 10;  //sem de control de mem compartida
+										sems.sem_op = -1;
+										sems.sem_flg = 0;
+										if(semop(sem,&sems,1) == -1){
+											if(errno==EINTR) break;
+											perror("Error sem de mem compartida: ");
+										}
+										movX = (int*)(ptr+2048+j*8);
+										movY = (int*)(ptr+2048+j*8+4);
+										if((*movX) < 0 || (*movX) > 79) {
+											sems.sem_num = 10;  //sem de control de mem compartida
+											sems.sem_op = 1;
+											sems.sem_flg = 0;
+											if(semop(sem,&sems,1) == -1) perror("Error sem de mem compartida: ");
+											(*r_perdidas) ++;
+											(*movY) = -1;
+											(*movX) = -1;
+											break;
+										}
+
+										if(BATR_avance_rana_fin((int)(*movX),(int)(*movY))==-1){
+											perror("Error: Final avance rana.\n");
+											exit(1);
+										}
+
+										if((*movY)==11){
+											//Sem de control de mem compartida
+											sems.sem_num = 10;
+											sems.sem_op = 1; //Cierra la sección crítica
+											sems.sem_flg = 0;
+											if(semop(sem,&sems,1) == -1) perror("Error sem de mem compartida: ");
+											(*r_salvadas) ++;
+											(*movY) = -1;
+											(*movX) = -1;
+											break;
+										}
+
+										//Si acaba de nacer
+										//Probar a poner este if en la sección saltar hacia troncos DEBUG
+										if((*movY) == 1 && nacimiento == 0){
+											nacimiento = 1;
+											sems.sem_num = i+2; //sem de control de nacimiento (por rana madre)
+											sems.sem_op = 1;
+											sems.sem_flg = 0;
+											if(semop(sem,&sems,1)==-1) perror("Error sem de control de nacimiento");
+										}
+
+										//Aquí es un desplazamiento normal de troncos
+										sems.sem_num = 10;  //sem de control de mem compartida
+										sems.sem_op = 1; //Cierra la memoria compartida
+										sems.sem_flg = 0;
+										if(semop(sem,&sems,1) == -1) perror("Error sem de mem compartida: ");
+									} // Fin bucle infinito
+
+									//Sem de control de procesos maximos
+									sems.sem_num = 1;
+									sems.sem_op=1; //AQUÍ TERMINA LA RANITA
+									sems.sem_flg=0;
+									if(semop(sem,&sems,1)==-1) perror("Error sem de control de procesos: ");
+									sems.sem_num= 6;
 									sems.sem_op = 1;
 									sems.sem_flg = 0;
-									if(semop(sem,&sems,1) == -1) perror("Error sem de mem compartida: ");
-									(*r_perdidas) ++;
-									(*movY) = -1;
-									(*movX) = -1;
+									if(semop(sem,&sems,1)==-1) perror("Error sem de control de procesos en le ranitas: ");
+									/* ==================================================================================== */
 									break;
-								}
-
-								if(BATR_avance_rana_fin((int)(*movX),(int)(*movY))==-1){
-									perror("Error: Final avance rana.\n");
-									exit(1);
-								}
-
-								if((*movY)==11){
-									//Sem de control de mem compartida
-									sems.sem_num = 10;
-									sems.sem_op = 1; //Cierra la sección crítica
-									sems.sem_flg = 0;
-									if(semop(sem,&sems,1) == -1) perror("Error sem de mem compartida: ");
-									(*r_salvadas) ++;
-									(*movY) = -1;
-									(*movX) = -1;
-									break;
-								}
-
-								//Si acaba de nacer
-								//Probar a poner este if en la sección saltar hacia troncos DEBUG
-								if((*movY) == 1 && nacimiento == 0){
-									nacimiento = 1;
-									sems.sem_num = i+2; //sem de control de nacimiento (por rana madre)
-									sems.sem_op = 1;
-									sems.sem_flg = 0;
-									if(semop(sem,&sems,1)==-1) perror("Error sem de control de nacimiento");
-								}
-
-								//Aquí es un desplazamiento normal de troncos
-								sems.sem_num = 10;  //sem de control de mem compartida
-								sems.sem_op = 1; //Cierra la memoria compartida
-								sems.sem_flg = 0;
-								if(semop(sem,&sems,1) == -1) perror("Error sem de mem compartida: ");
-							} // Fin bucle infinito
-
-							sems.sem_num = 1;  //sem de control de procesos maximos
-							sems.sem_op=1;
-							sems.sem_flg=0;
-							if(semop(sem,&sems,1)==-1){
-							perror("Error sem de control de procesos: ");
-							}
-							sems.sem_num= 6;
-							sems.sem_op = 1;
-							sems.sem_flg = 0;
-							if(semop(sem,&sems,1)==-1){
-							perror("Error sem de control de procesos en le ranitas: ");
-							}
-							/* ==================================================================================== */
-							break;
-							}
+							}//FIN DEL SWITCH
 
 							break;
 
