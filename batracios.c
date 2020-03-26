@@ -8,6 +8,10 @@
 #include <signal.h>
 #include <errno.h>
 #include "batracios.h"
+#include <string.h>
+
+
+/* ============= Variables Globales ============= */
 
 char *ptr;
 int mem, sem;
@@ -21,60 +25,51 @@ union semun {
 	struct semid_ds *buf;
 };
 
+/* ============= Funciones ============= */
+
 void rana(int i);
 void ranita (int j, int madre);
 void intHandler(int a);
 void finPrograma();
 
+/* ============= Inicio ============= */
+
 int main (int argc, char*argv[]){
 
-	//int lTroncos[7]={1,1,1,1,1,1,1};
-	//int lAguas[7]={1,1,1,1,1,1,1};
 	int lTroncos[]={1,2,3,4,3,2,1},lAguas[]={5,4,3,2,3,4,5};
 	int dirs[]={1,0,1,0,1,0,1};
-	int error, i, j, z;
+	int i, j, z, param1, param2;
 	int *movX, *movY;
-	union semun sem1, sem2, sem3, sem4, sem5, sem6, sem10;
+	char errorLineaOrdenes[] = "USO: ./batracios VELOCIDAD VELOCIDAD_PARTO\n";
+	union semun sem1, sem2, sem3, sem4, sem5, sem10;
 
 	sem1.val=25;
 	sem2.val=1;
 	sem3.val=1;
 	sem4.val=1;
 	sem5.val=1;
-	sem6.val=1;
 	sem10.val=1;
 
-/*-----------COMPROBACION DE PARAMETROS------------*/
+/* ============= Comprobacion de parametros ============= */
 
-	if(argc>3) {
-		fprintf(stderr,"\nError: demasiados parámetros.\n");
-		fflush(stderr);
+	if(argc != 3) {
+		write(2,errorLineaOrdenes,strlen(errorLineaOrdenes));
 		exit(2);
 	}
 
-	if(argc<3) {
-		fprintf(stderr,"\nError: debe especificar velocidad y tiempo de descanso entre dos partos.\n");
-		fflush(stderr);
+	param1 = atoi(argv[1]);
+	param2 = atoi(argv[2]);
+
+	if(param1 < 0 || param1 > 1000) {
+		write(2, "Ha introducido una velocidad incorrecta.\nPor favor, introduzca una velocidad ente 0 y 1000", strlen("Ha introducido una velocidad incorrecta.\nPor favor, introduzca una velocidad ente 0 y 1000"));
 		exit(2);
 	}
 
-	if(atoi(argv[1])<0 || atoi(argv[1])>1000) {
-		fprintf(stderr,"\nMal especificada la velocidad. Debe estar comprendida entre 0 y 1000.\n");
-		fflush(stderr);
-		exit(2);
+	if (param2 <= 0) {
+		write(2, "Ha introducido un tiempo de partos incorrecto.\nIntroduzca un tiempo mayor de 0", strlen("Ha introducido un tiempo de partos incorrecto.\nIntroduzca un tiempo mayor de 0"));
 	}
 
-	if(atoi(argv[2])<=0) {
-		fprintf(stderr,"\nEl tiempo entre dos partos de una rana debe ser mayor que 0.\n");
-		fflush(stderr);
-		exit(2);
-	}
-
-
-/*-----------FIN COMPROBACION DE PARAMETROS------------*/
-
-
-	//----------CREACION DE LOS RECURSOS----------
+	/* ============= Creacion Recursos ============= */
 
 	ac.sa_handler = intHandler;
 	sigemptyset(&ac.sa_mask);
@@ -86,15 +81,12 @@ int main (int argc, char*argv[]){
 	}
 
 	//Memoria compartida
-
-	mem=shmget(IPC_PRIVATE,sizeof(int)*500,IPC_CREAT|0600);
-	if(mem == -1) {
+	if((mem=shmget(IPC_PRIVATE,sizeof(int)*500,IPC_CREAT|0600)) == -1) {
 		perror("Error: No se pudo crear la mem compartida.");
 		exit(2);
 	}
-	ptr = (char*) shmat(mem,NULL,0);
 
-	if(ptr == NULL) {
+	if((ptr = (char*) shmat(mem,NULL,0)) == NULL) {
 		perror("Error: No se pudo asignar el puntero de sentido de mem compartida");
 		exit(2);
 	}
@@ -108,10 +100,10 @@ int main (int argc, char*argv[]){
 	}
 
 	r_salvadas = (int*)(ptr+2048+51*sizeof(int));
-	*r_salvadas = 0;
 	r_nacidas = (int*)(ptr+2048+52*sizeof(int));
-	*r_nacidas = 0;
 	r_perdidas = (int*)(ptr+2048+53*sizeof(int));
+	*r_salvadas = 0;
+	*r_nacidas = 0;
 	*r_perdidas = 0;
 
 	sem=semget(IPC_PRIVATE,14,IPC_CREAT|0600);
@@ -120,61 +112,50 @@ int main (int argc, char*argv[]){
 		exit(2);
 	}
 
-	error=semctl(sem,1,SETVAL, sem1);   //Semáforo para controlar el número de procesos
-	if(error==-1) {
+	//Semáforo para controlar el número de procesos
+	if(semctl(sem,1,SETVAL, sem1)==-1) {
 		perror("error al inicializar el sem 1");
 		exit(2);
 	}
 
-	error=semctl(sem,2,SETVAL,sem2);   //Semáforo para controlar el nacimiento de la rana 1
-	if(error==-1) {
+	//Semáforo para controlar el nacimiento de la rana 1
+	if(semctl(sem,2,SETVAL,sem2)==-1) {
 		perror("error al inicializar el sem 2");
 		exit(2);
 	}
 
-	error=semctl(sem,3,SETVAL,sem3);   //Semáforo para controlar el nacimiento de la rana 2
-	if(error==-1) {
+	//Semáforo para controlar el nacimiento de la rana 2
+	if(semctl(sem,3,SETVAL,sem3)==-1) {
 		perror("error al inicializar el sem 3");
 		exit(2);
 	}
 
-	error=semctl(sem,4,SETVAL,sem4);   //Semáforo para controlar el nacimiento de la rana 3
-	if(error==-1) {
+	//Semáforo para controlar el nacimiento de la rana 3
+	if(semctl(sem,4,SETVAL,sem4)==-1) {
 		perror("error al inicializar el sem 4");
 		exit(2);
 	}
 
-	error=semctl(sem,5,SETVAL,sem5);   //Semáforo para controlar el nacimiento de la rana 4
-	if(error==-1) {
+	//Semáforo para controlar el nacimiento de la rana 4
+	if(semctl(sem,5,SETVAL,sem5)==-1) {
 		perror("error al inicializar el sem 5");
 		exit(2);
 	}
 
-	error=semctl(sem,6,SETVAL,sem6);   //Semáforo para controlar que las ranas no se choquen
-	if(error==-1) {
-		perror("error al inicializar el sem 6");
-		exit(2);
-	}
-
-	error=semctl(sem,10,SETVAL,sem10); //Semáforo para controlar la mem compartida
-	if(error==-1) {
+	//Semáforo para controlar la mem compartida
+	if(semctl(sem,10,SETVAL,sem10)==-1) {
 		perror("error al inicializar el sem 10");
 		exit(2);
 	}
 
+	/* ============= Inicio libbatracios.a ============= */
 
-
-	//---------FIN CREACION DE RECURSOS -------------
-
-	//inicio
-
-	error=BATR_inicio(atoi(argv[1]),sem,lTroncos,lAguas,dirs,atoi(argv[2]),ptr);
-	if(error==-1) {
+	if(BATR_inicio(atoi(argv[1]),sem,lTroncos,lAguas,dirs,atoi(argv[2]),ptr)==-1) {
 		perror("Error: No se pudo iniciar la librería batracios");
 		exit(1);
 	}
 
-	//-------------CREACION DE LAS RANAS---------------//
+	/* ============= Creacion Ranas ============= */
 
 	for(i=0; i<4; i++) {
 
@@ -205,14 +186,11 @@ int main (int argc, char*argv[]){
 
 			rana(i);
 			exit(0);
-		} //Fin switch
-
-	} //Fin for (for(i = 0; i < 4; i++))
+		}
+	}
 
 	while(!noTerminado) {
-
 		for(z = 0; z < 7; z++) {
-
 			sems.sem_num = 10;    //sem de control de mem compartida
 			sems.sem_op = -1;
 			sems.sem_flg = 0;
@@ -221,8 +199,7 @@ int main (int argc, char*argv[]){
 				perror("Error sem de choque: ");
 			}
 
-			error=BATR_avance_troncos(z);
-			if(error==-1) {
+			if(BATR_avance_troncos(z)==-1) {
 				perror("Error: No pudieron avanzar los troncos de la fila 0");
 			}
 
@@ -244,8 +221,7 @@ int main (int argc, char*argv[]){
 				perror("Error sem de choque: ");
 			}
 
-			error=BATR_pausita();
-			if(error==-1) {
+			if(BATR_pausita()==-1) {
 				perror("Error: No se pudo realizar \"pausita\" de la fila 0");
 			}
 		}
