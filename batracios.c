@@ -55,7 +55,7 @@ int main (int argc, char*argv[]){
 
 	if(argc != 3) {
 		write(2,errorLineaOrdenes,strlen(errorLineaOrdenes));
-		exit(2);
+		exit(1);
 	}
 
 	param1 = atoi(argv[1]);
@@ -63,12 +63,12 @@ int main (int argc, char*argv[]){
 
 	if(param1 < 0 || param1 > 1000) {
 		write(2, "Ha introducido una velocidad incorrecta.\nPor favor, introduzca una velocidad ente 0 y 1000", strlen("Ha introducido una velocidad incorrecta.\nPor favor, introduzca una velocidad ente 0 y 1000"));
-		exit(2);
+		exit(1);
 	}
 
 	if (param2 <= 0) {
 		write(2, "Ha introducido un tiempo de partos incorrecto.\nIntroduzca un tiempo mayor de 0", strlen("Ha introducido un tiempo de partos incorrecto.\nIntroduzca un tiempo mayor de 0"));
-		exit(2);
+		exit(1);
 	}
 
 	/* ============= Creacion Recursos ============= */
@@ -78,8 +78,8 @@ int main (int argc, char*argv[]){
 	ac.sa_flags = 0;
 	sigaddset(&ac.sa_mask, SIGINT);
 	if (sigaction(SIGINT, &ac, NULL) == -1) {
-		perror("Error en la manejadora SIGINT (CTRL+C)\n");
-		exit(1);
+		perror("\033[1;31mError en la manejadora SIGINT (CTRL+C)\033[0m\n");
+		exit(2);
 	}
 
 	/* ============= Creación de la mem compartida ============= */
@@ -89,13 +89,13 @@ int main (int argc, char*argv[]){
 
 	// Memoria compartida
 	if((mem = shmget(IPC_PRIVATE,sizeof(int)*500,IPC_CREAT|0600))==-1) {
-		perror("Error en la creación de la memoria compartida\n");
+		perror("\033[1;31mError en la creación de la memoria compartida\033[0m\n");
 		exit(3);
 	}
 
 	// Puntero a la ptr de memoria compartida
 	if((ptr = (char *) shmat(mem,NULL,0)) == NULL) {
-		perror("Error en la creación del puntero (ptr) de memoria compartida.\n");
+		perror("\033[1;31mError en la creación del puntero (ptr) de memoria compartida.\033[0m\n");
 		exit(3);
 	}
 
@@ -124,8 +124,8 @@ int main (int argc, char*argv[]){
 	/* ============= Creación del lote de semáforos ============= */
 	sem=semget(IPC_PRIVATE,14,IPC_CREAT|0600);
 	if(sem==-1) {
-		perror("Error en la creación del lote de semaforos.");
-		exit(2);
+		perror("\033[1;31mError en la creación del lote de semaforos.");
+		exit(4);
 	}
 
 
@@ -135,45 +135,45 @@ int main (int argc, char*argv[]){
 
 	//PROCESOS MAXIMOS //Semáforo 1 (Se encarga del parto de la 1º rana madre)
 	if(semctl(sem,1,SETVAL, sem1)==-1) {
-		perror("Error al inicializar el semáforo 1.");
-		exit(2);
+		perror("\033[1;31mError al inicializar el semáforo 1.");
+		exit(4);
 	}
 
 	//RANA1 // Semáforo 2 (Se encarga del parto de la 2º rana madre)
 	if(semctl(sem,2,SETVAL,sem2)==-1) {
-		perror("Error al inicializar el semáforo 2.");
-		exit(2);
+		perror("\033[1;31mError al inicializar el semáforo 2.");
+		exit(4);
 	}
 
 	//RANA2 // Semáforo 3 (Se encarga del parto de la 3º rana madre)
 	if(semctl(sem,3,SETVAL,sem3)==-1) {
-		perror("Error al inicializar el semáforo 3.");
-		exit(2);
+		perror("\033[1;31mError al inicializar el semáforo 3.");
+		exit(4);
 	}
 
 	//RANA3 // Semáforo 4 (Se encarga del parto de la 4º rana madre)
 	if(semctl(sem,4,SETVAL,sem4)==-1) {
-		perror("Error al inicializar el semáforo 4.");
-		exit(2);
+		perror("\033[1;31mError al inicializar el semáforo 4.");
+		exit(4);
 	}
 
 	//RANA4 // Semáforo 5 (Se encarga de la memoria compartida)
 	if(semctl(sem,5,SETVAL,sem5)==-1) {
-		perror("Error al inicializar el semáforo 5.");
-		exit(2);
+		perror("\033[1;31mError al inicializar el semáforo 5.");
+		exit(4);
 	}
 
 	//MEM COMPARTIDA // Semáforo 10 NO existe
 	if(semctl(sem,10,SETVAL,sem10)==-1) {
-		perror("Error al inicializar el semáforo 10.");
-		exit(2);
+		perror("\033[1;31mError al inicializar el semáforo 10.");
+		exit(4);
 	}
 
 	/* ============= Inicio libbatracios.a ============= */
 
 	if(BATR_inicio(atoi(argv[1]),sem,lTroncos,lAguas,dirs,atoi(argv[2]),ptr)==-1) {
-		perror("Error: No se pudo iniciar 'libbatracios.a'.");
-		exit(1);
+		perror("\033[1;31mError: No se pudo iniciar 'libbatracios.a'.");
+		exit(5);
 	}
 
 	/* ============= Creación de las ranas y ranitas ============= */
@@ -182,8 +182,8 @@ int main (int argc, char*argv[]){
 
 		switch(fork()) {
 		case -1:
-			perror("Error en la llamada al sistema 'fork()'.\nError en ranasMadre\n");
-			exit(1);
+			perror("\033[1;31mError en la llamada al sistema 'fork()'.\nError en ranasMadre\033[0m\n");
+			exit(6);
 		case 0:
 			ptr = (char*) shmat(mem,NULL,0);
 
@@ -193,8 +193,8 @@ int main (int argc, char*argv[]){
 			ac.sa_flags = 0;
 			sigaddset(&ac.sa_mask, SIGINT);
 			if (sigaction(SIGINT, &ac, NULL) == -1) {
-				perror("Error en la manejadora del SIGINT (CTRL+C)\n");
-				exit(1);
+				perror("\033[1;31mError en la manejadora del SIGINT (CTRL+C)\033[0m\n");
+				exit(2);
 			}
 
 			//Se ignora y se evitan procesos zombies
@@ -203,8 +203,8 @@ int main (int argc, char*argv[]){
 			ac.sa_flags = 0;
 			sigaddset(&ac.sa_mask, SIGINT);
 			if (sigaction(SIGCHLD, &ac, NULL) == -1) {
-				perror("Error en la manejadora del SIGCHLD\n");
-				exit(1);
+				perror("\033[1;31mError en la manejadora del SIGCHLD\033[0m\n");
+				exit(2);
 			}
 
 			rana(i);
@@ -219,10 +219,10 @@ int main (int argc, char*argv[]){
 			sems.sem_flg = 0;
 			if(semop(sem,&sems,1) == -1) {
 				if(errno==EINTR) break;
-				perror("Error en la memoria compartida (variable:sem)\n");
+				perror("\033[1;31mError en la memoria compartida (variable:sem)\033[0m\n");
 			}
 
-			if(BATR_avance_troncos(z)==-1) perror("Error al avanzar los troncos.");
+			if(BATR_avance_troncos(z)==-1) perror("\033[1;31mError al avanzar los troncos.");
 
 			for(j=0; j<25; j++)
 			{
@@ -239,9 +239,9 @@ int main (int argc, char*argv[]){
 			sems.sem_num = 10;
 			sems.sem_op = 1;
 			sems.sem_flg = 0;
-			if(semop(sem,&sems,1) == -1) perror("Error en la memoria compartida (variable:sem)\n");
+			if(semop(sem,&sems,1) == -1) perror("\033[1;31mError en la memoria compartida (variable:sem)\033[0m\n");
 
-			if(BATR_pausita()==-1) perror("Error en la función: 'BATR_pausita'.\n");
+			if(BATR_pausita()==-1) perror("\033[1;31mError en la función: 'BATR_pausita'.\033[0m\n");
 		}
 	}   //Fin bucle infinito (troncos)
 	finPrograma();
@@ -263,7 +263,7 @@ void rana(int i){
 		sems.sem_flg = 0;
 		if(semop(sem,&sems,1)==-1) {
 			if(errno==EINTR) break;
-			perror("Error semáforo de control de nacimiento de ranaMadre.\n");
+			perror("\033[1;31mError semáforo de control de nacimiento de ranaMadre.\033[0m\n");
 		}
 
 		sems.sem_num = 1;
@@ -271,7 +271,7 @@ void rana(int i){
 		sems.sem_flg = 0;
 		if(semop(sem,&sems,1)==-1) {
 			if(errno==EINTR) break;
-			perror("Error en el semáforo de procesos máximos.\n");
+			perror("\033[1;31mError en el semáforo de procesos máximos.\033[0m\n");
 		}
 
 		sems.sem_num = 10;
@@ -282,9 +282,9 @@ void rana(int i){
 				sems.sem_num = 1;
 				sems.sem_op = 1;
 				sems.sem_flg = 0;
-				if(semop(sem,&sems,1)==-1) perror("Error en el semáforo de procesos máximos.\n");
+				if(semop(sem,&sems,1)==-1) perror("\033[1;31mError en el semáforo de procesos máximos.\033[0m\n");
 				break;
-			} perror("Error en la memoria compartida (variable:sem)\n");
+			} perror("\033[1;31mError en la memoria compartida (variable:sem)\033[0m\n");
 		}
 
 		//Por qué no un 20? DEBUG
@@ -295,13 +295,13 @@ void rana(int i){
 
 			if(*movY < 0) {
 
-				if(BATR_parto_ranas(i,movX,movY)==-1) perror("Error en la función: 'BATR_parto_ranas'.\n");
+				if(BATR_parto_ranas(i,movX,movY)==-1) perror("\033[1;31mError en la función: 'BATR_parto_ranas'.\033[0m\n");
 				(*r_nacidas)++;
 
 				switch(fork()) {
 				case -1:
-					perror("Error en la llamada al sistema 'fork()'.\nError en ranasRanitas\n");
-					exit(1);
+					perror("\033[1;31mError en la llamada al sistema 'fork()'.\nError en ranasRanitas\033[0m\n");
+					exit(6);
 
 				case 0:
 					ac.sa_handler = intHandler;
@@ -309,8 +309,8 @@ void rana(int i){
 					ac.sa_flags = 0;
 					sigaddset(&ac.sa_mask, SIGINT);
 					if (sigaction(SIGINT, &ac, NULL) == -1) {
-						perror("Error en la manejadora del SIGINT (CTRL+C)\n");
-						exit(1);
+						perror("\033[1;31mError en la manejadora del SIGINT (CTRL+C)\033[0m\n");
+						exit(2);
 					}
 
 					ac.sa_handler = SIG_IGN;
@@ -318,8 +318,8 @@ void rana(int i){
 					ac.sa_flags = 0;
 					sigaddset(&ac.sa_mask, SIGINT);
 					if (sigaction(SIGCHLD, &ac, NULL) == -1) {
-						perror("Error en la manejadora del SIGCHLD\n");
-						exit(1);
+						perror("\033[1;31mError en la manejadora del SIGCHLD\033[0m\n");
+						exit(2);
 					}
 					ranita(j, i);
 					break;
@@ -333,14 +333,14 @@ void rana(int i){
 				sems.sem_num = 1;
 				sems.sem_op = 1;
 				sems.sem_flg = 0;
-				if(semop(sem,&sems,1)==-1) perror("Error en el semáforo de procesos máximos.\n");
+				if(semop(sem,&sems,1)==-1) perror("\033[1;31mError en el semáforo de procesos máximos.\033[0m\n");
 			}
 		}
 
 		sems.sem_num = 10;
 		sems.sem_op = 1;
 		sems.sem_flg = 0;
-		if(semop(sem,&sems,1) == -1) perror("Error en la memoria compartida (variable:sem)\n");
+		if(semop(sem,&sems,1) == -1) perror("\033[1;31mError en la memoria compartida (variable:sem)\033[0m\n");
 	}
 }
 
@@ -363,7 +363,7 @@ void ranita(int i, int madre) {
 		if(semop(sem,&sems,1) == -1) {
 			if(errno==EINTR)
 				break;
-			perror("Error en la memoria compartida (variable:sem)\n");
+			perror("\033[1;31mError en la memoria compartida (variable:sem)\033[0m\n");
 		}
 
 		movX = (int*)(ptr+2048+i*8);
@@ -374,7 +374,7 @@ void ranita(int i, int madre) {
 			sems.sem_num = 10;
 			sems.sem_op = 1;
 			sems.sem_flg = 0;
-			if(semop(sem,&sems,1) == -1) perror("Error en la memoria compartida (variable:sem)\n");
+			if(semop(sem,&sems,1) == -1) perror("\033[1;31mError en la memoria compartida (variable:sem)\033[0m\n");
 
 			(*r_perdidas)++;
 			(*movY) = -1;
@@ -389,7 +389,7 @@ void ranita(int i, int madre) {
 			sems.sem_num = 10;
 			sems.sem_op = 1;
 			sems.sem_flg = 0;
-			if(semop(sem,&sems,1) == -1) perror("Error en la memoria compartida (variable:sem)\n");
+			if(semop(sem,&sems,1) == -1) perror("\033[1;31mError en la memoria compartida (variable:sem)\033[0m\n");
 
 			BATR_pausa();
 			continue;
@@ -397,18 +397,18 @@ void ranita(int i, int madre) {
 
 
 		if(BATR_avance_rana_ini((int)(*movX),(int)(*movY))==-1) {
-			perror("Error en la función: 'BATR_avance_rana_ini'.\n");
-			exit(1);
+			perror("\033[1;31mError en la función: 'BATR_avance_rana_ini'.\033[0m\n");
+			exit(5);
 		}
 		if(BATR_avance_rana((int*)movX,(int*)movY,sentido)==-1) {
-			perror("Error en la función: 'BATR_avance_rana'.\n");
-			exit(1);
+			perror("\033[1;31mError en la función: 'BATR_avance_rana'.\033[0m\n");
+			exit(5);
 		}
 
 		sems.sem_num = 10;
 		sems.sem_op = 1;
 		sems.sem_flg = 0;
-		if(semop(sem,&sems,1) == -1) perror("Error en la memoria compartida (variable:sem)\n");
+		if(semop(sem,&sems,1) == -1) perror("\033[1;31mError en la memoria compartida (variable:sem)\033[0m\n");
 
 		BATR_pausa();
 
@@ -417,7 +417,7 @@ void ranita(int i, int madre) {
 		sems.sem_flg = 0;
 		if(semop(sem,&sems,1) == -1) {
 			if(errno==EINTR) break;
-			perror("Error en la memoria compartida (variable:sem)\n");
+			perror("\033[1;31mError en la memoria compartida (variable:sem)\033[0m\n");
 		}
 
 		movX = (int*)(ptr+2048+i*8);
@@ -428,7 +428,7 @@ void ranita(int i, int madre) {
 			sems.sem_num = 10;
 			sems.sem_op = 1;
 			sems.sem_flg = 0;
-			if(semop(sem,&sems,1) == -1) perror("Error en la memoria compartida (variable:sem)\n");
+			if(semop(sem,&sems,1) == -1) perror("\033[1;31mError en la memoria compartida (variable:sem)\033[0m\n");
 
 			(*r_perdidas)++;
 			(*movY) = -1;
@@ -438,8 +438,8 @@ void ranita(int i, int madre) {
 
 
 		if(BATR_avance_rana_fin((int)(*movX),(int)(*movY))==-1) {
-			perror("Error en la función: 'BATR_avance_rana_fin'.\n");
-			exit(1);
+			perror("\033[1;31mError en la función: 'BATR_avance_rana_fin'.\033[0m\n");
+			exit(5);
 		}
 
 		if((*movY)==11) {
@@ -447,7 +447,7 @@ void ranita(int i, int madre) {
 			sems.sem_num = 10;
 			sems.sem_op = 1;
 			sems.sem_flg = 0;
-			if(semop(sem,&sems,1) == -1) perror("Error en la memoria compartida (variable:sem)\n");
+			if(semop(sem,&sems,1) == -1) perror("\033[1;31mError en la memoria compartida (variable:sem)\033[0m\n");
 
 			(*r_salvadas)++;
 			(*movY) = -1;
@@ -461,19 +461,19 @@ void ranita(int i, int madre) {
 			sems.sem_num = madre+2;
 			sems.sem_op = 1;
 			sems.sem_flg = 0;
-			if(semop(sem,&sems,1)==-1) perror("Error semáforo de control de nacimiento de ranaMadre.\n");
+			if(semop(sem,&sems,1)==-1) perror("\033[1;31mError semáforo de control de nacimiento de ranaMadre.\033[0m\n");
 		}
 
 		sems.sem_num = 10;
 		sems.sem_op = 1;
 		sems.sem_flg = 0;
-		if(semop(sem,&sems,1) == -1) perror("Error en la memoria compartida (variable:sem)\n");
+		if(semop(sem,&sems,1) == -1) perror("\033[1;31mError en la memoria compartida (variable:sem)\033[0m\n");
 	}
 
 	sems.sem_num = 1;
 	sems.sem_op=1;
 	sems.sem_flg=0;
-	if(semop(sem,&sems,1)==-1) perror("Error en el semáforo de procesos máximos.\n");
+	if(semop(sem,&sems,1)==-1) perror("\033[1;31mError en el semáforo de procesos máximos.\033[0m\n");
 
 	exit(0);
 }
@@ -488,8 +488,8 @@ void finPrograma()
 	int n;
 
 	if (BATR_fin() == -1) {
-		perror("Error en la función: 'BATR_fin'.\n");
-		exit(1);
+		perror("\033[1;31mError en la función: 'BATR_fin'.\033[0m\n");
+		exit(5);
 	}
 
 	for(n=0; n<4; n++) wait(NULL);
@@ -497,19 +497,20 @@ void finPrograma()
 	sems.sem_num = 1;
 	sems.sem_op = -25;
 	sems.sem_flg = 0;
-	if(semop(sem,&sems,1) == -1) perror("Error en el semáforo de procesos máximos.\n");
+	if(semop(sem,&sems,1) == -1) perror("\033[1;31mError en el semáforo de procesos máximos.\033[0m\n");
 
-	if(BATR_comprobar_estadIsticas(*r_nacidas, *r_salvadas, *r_perdidas)==-1) perror("Error en la función: 'BATR_comprobar_estadIsticas'.\n");
+	if(BATR_comprobar_estadIsticas(*r_nacidas, *r_salvadas, *r_perdidas)==-1) perror("\033[1;31mError en la función: 'BATR_comprobar_estadIsticas'.\033[0m\n");
 
-	if (semctl(sem, 0, IPC_RMID) == -1)
-		perror("Error al destruir el lote de semáforos.\n");
-	else
-		printf("Lote de semáforos destruidos.\n");
+	if (semctl(sem, 0, IPC_RMID) == -1) {
+		perror("\033[1;31mError al destruir el lote de semáforos.\033[0m\n");
+		exit(7);
+	} else
+		printf("\033[1;100;35mLote de semáforos destruidos.\033[0m\n");
 
 	if (shmctl(mem, IPC_RMID, 0) == -1) {
-		perror("Error al destruir la zona de memoria compartida.");
-		exit(1);
-	} else printf("Memoria compartida destruida.\n");
+		perror("\033[1;31mError al destruir la zona de memoria compartida.");
+		exit(7);
+	} else printf("\033[1;100;35mMemoria compartida destruida.\033[0m\n");
 
-	exit(1);
+	exit(0);
 }
