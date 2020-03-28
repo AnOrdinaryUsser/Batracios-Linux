@@ -17,7 +17,7 @@
 char *ptr;
 int mem, sem;
 int *r_salvadas, *r_nacidas, *r_perdidas;
-int noTerminado=0;
+int noTerminado=1;
 struct sembuf sems;
 struct sigaction ac;
 
@@ -37,7 +37,7 @@ void finPrograma();
 
 int main (int argc, char*argv[]){
 	setlocale(LC_ALL, "");
-	int lTroncos[]={1,2,3,4,3,2,1},lAguas[]={5,4,3,2,3,4,5};
+	int lTroncos[]={4,5,4,5,4,5,4},lAguas[]={5,4,3,5,3,4,5};
 	int dirs[]={1,0,1,0,1,0,1};
 	int i, j, z, param1, param2;
 	int *movX, *movY;
@@ -122,7 +122,7 @@ int main (int argc, char*argv[]){
 	*r_perdidas = 0;
 
 	/* ============= Creación del lote de semáforos ============= */
-	sem=semget(IPC_PRIVATE,14,IPC_CREAT|0600);
+	sem=semget(IPC_PRIVATE,7,IPC_CREAT|0600);
 	if(sem==-1) {
 		perror("\033[1;31mError en la creación del lote de semaforos.");
 		exit(4);
@@ -131,47 +131,45 @@ int main (int argc, char*argv[]){
 
 /* ============= Inicialización del lote de semáforos ============= */
 
-	// Incluir un semaforo 0 que es nuestro semaforo de procesos maximos
-
-	//PROCESOS MAXIMOS //Semáforo 1 (Se encarga del parto de la 1º rana madre)
+	// Semáforo 1 (Se encarga de controlar los procesos)
 	if(semctl(sem,1,SETVAL, sem1)==-1) {
 		perror("\033[1;31mError al inicializar el semáforo 1.");
 		exit(4);
 	}
 
-	//RANA1 // Semáforo 2 (Se encarga del parto de la 2º rana madre)
+	// Semáforo 2 (Se encarga del parto de la 1º rana madre)
 	if(semctl(sem,2,SETVAL,sem2)==-1) {
 		perror("\033[1;31mError al inicializar el semáforo 2.");
 		exit(4);
 	}
 
-	//RANA2 // Semáforo 3 (Se encarga del parto de la 3º rana madre)
+	// Semáforo 3 (Se encarga del parto de la 2º rana madre)
 	if(semctl(sem,3,SETVAL,sem3)==-1) {
 		perror("\033[1;31mError al inicializar el semáforo 3.");
 		exit(4);
 	}
 
-	//RANA3 // Semáforo 4 (Se encarga del parto de la 4º rana madre)
+	// Semáforo 4 (Se encarga del parto de la 3º rana madre)
 	if(semctl(sem,4,SETVAL,sem4)==-1) {
 		perror("\033[1;31mError al inicializar el semáforo 4.");
 		exit(4);
 	}
 
-	//RANA4 // Semáforo 5 (Se encarga de la memoria compartida)
+	// Semáforo 5 (Se encarga del parto de la 4º rana madre)
 	if(semctl(sem,5,SETVAL,sem5)==-1) {
 		perror("\033[1;31mError al inicializar el semáforo 5.");
 		exit(4);
 	}
 
-	//MEM COMPARTIDA // Semáforo 10 NO existe
+	// Semáforo 6 (Se encarga de la memoria compartida)
 	if(semctl(sem,6,SETVAL,sem6)==-1) {
-		perror("\033[1;31mError al inicializar el semáforo 10.");
+		perror("\033[1;31mError al inicializar el semáforo 6.");
 		exit(4);
 	}
 
 	/* ============= Inicio libbatracios.a ============= */
 
-	if(BATR_inicio(atoi(argv[1]),sem,lTroncos,lAguas,dirs,atoi(argv[2]),ptr)==-1) {
+	if(BATR_inicio(param1,sem,lTroncos,lAguas,dirs,param2,ptr)==-1) {
 		perror("\033[1;31mError: No se pudo iniciar 'libbatracios.a'.");
 		exit(5);
 	}
@@ -212,7 +210,7 @@ int main (int argc, char*argv[]){
 		}
 	}
 
-	while(!noTerminado) {
+	while(noTerminado) {
 		for(z = 0; z < 7; z++) {
 			sems.sem_num = 6;
 			sems.sem_op = -1;
@@ -255,7 +253,7 @@ int main (int argc, char*argv[]){
 void rana(int i){
 	int j;
 	int *movX, *movY; ptr = (char*) shmat(mem,NULL,0); ptr= (char*) shmat(mem,NULL,0);
-	while(!noTerminado) {
+	while(noTerminado) {
 		BATR_descansar_criar();
 
 		sems.sem_num = i+2;
@@ -355,7 +353,7 @@ void ranita(int i, int madre) {
 
 	ptr= (char*) shmat(mem,NULL,0);
 
-	while(!noTerminado)
+	while(noTerminado)
 	{
 		sems.sem_num =6;
 		sems.sem_op = -1;
@@ -480,7 +478,7 @@ void ranita(int i, int madre) {
 
 
 void intHandler(int a) {
-	noTerminado=1;
+	noTerminado=0;
 }
 
 void finPrograma()
