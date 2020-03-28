@@ -42,14 +42,14 @@ int main (int argc, char*argv[]){
 	int i, j, z, param1, param2;
 	int *movX, *movY;
 	char errorLineaOrdenes[] = "USO: ./batracios VELOCIDAD VELOCIDAD_PARTO\n";
-	union semun sem1, sem2, sem3, sem4, sem5, sem10;
+	union semun sem1, sem2, sem3, sem4, sem5, sem6;
 
 	sem1.val=25;
 	sem2.val=1;
 	sem3.val=1;
 	sem4.val=1;
 	sem5.val=1;
-	sem10.val=1;
+	sem6.val=1;
 
 /* ============= Comprobacion de parametros ============= */
 
@@ -164,7 +164,7 @@ int main (int argc, char*argv[]){
 	}
 
 	//MEM COMPARTIDA // Semáforo 10 NO existe
-	if(semctl(sem,10,SETVAL,sem10)==-1) {
+	if(semctl(sem,6,SETVAL,sem6)==-1) {
 		perror("\033[1;31mError al inicializar el semáforo 10.");
 		exit(4);
 	}
@@ -214,7 +214,7 @@ int main (int argc, char*argv[]){
 
 	while(!noTerminado) {
 		for(z = 0; z < 7; z++) {
-			sems.sem_num = 10;
+			sems.sem_num = 6;
 			sems.sem_op = -1;
 			sems.sem_flg = 0;
 			if(semop(sem,&sems,1) == -1) {
@@ -236,7 +236,7 @@ int main (int argc, char*argv[]){
 						(*movX)--;
 				}
 			}
-			sems.sem_num = 10;
+			sems.sem_num =6;
 			sems.sem_op = 1;
 			sems.sem_flg = 0;
 			if(semop(sem,&sems,1) == -1) perror("\033[1;31mError en la memoria compartida (variable:sem)\033[0m\n");
@@ -274,7 +274,7 @@ void rana(int i){
 			perror("\033[1;31mError en el semáforo de procesos máximos.\033[0m\n");
 		}
 
-		sems.sem_num = 10;
+		sems.sem_num =6;
 		sems.sem_op = -1;
 		sems.sem_flg = 0;
 		if(semop(sem,&sems,1) == -1) {
@@ -337,7 +337,7 @@ void rana(int i){
 			}
 		}
 
-		sems.sem_num = 10;
+		sems.sem_num =6;
 		sems.sem_op = 1;
 		sems.sem_flg = 0;
 		if(semop(sem,&sems,1) == -1) perror("\033[1;31mError en la memoria compartida (variable:sem)\033[0m\n");
@@ -357,7 +357,7 @@ void ranita(int i, int madre) {
 
 	while(!noTerminado)
 	{
-		sems.sem_num = 10;
+		sems.sem_num =6;
 		sems.sem_op = -1;
 		sems.sem_flg = 0;
 		if(semop(sem,&sems,1) == -1) {
@@ -371,7 +371,7 @@ void ranita(int i, int madre) {
 
 		if((*movX) < 0 || (*movX) > 79)
 		{
-			sems.sem_num = 10;
+			sems.sem_num = 6;
 			sems.sem_op = 1;
 			sems.sem_flg = 0;
 			if(semop(sem,&sems,1) == -1) perror("\033[1;31mError en la memoria compartida (variable:sem)\033[0m\n");
@@ -386,7 +386,7 @@ void ranita(int i, int madre) {
 		else if(BATR_puedo_saltar((int)(*movX),(int)(*movY),IZQUIERDA)==0) sentido = IZQUIERDA;
 		else if(BATR_puedo_saltar((int)(*movX),(int)(*movY),DERECHA)==0) sentido = DERECHA;
 		else{
-			sems.sem_num = 10;
+			sems.sem_num = 6;
 			sems.sem_op = 1;
 			sems.sem_flg = 0;
 			if(semop(sem,&sems,1) == -1) perror("\033[1;31mError en la memoria compartida (variable:sem)\033[0m\n");
@@ -405,14 +405,14 @@ void ranita(int i, int madre) {
 			exit(5);
 		}
 
-		sems.sem_num = 10;
+		sems.sem_num = 6;
 		sems.sem_op = 1;
 		sems.sem_flg = 0;
 		if(semop(sem,&sems,1) == -1) perror("\033[1;31mError en la memoria compartida (variable:sem)\033[0m\n");
 
 		BATR_pausa();
 
-		sems.sem_num = 10;
+		sems.sem_num = 6;
 		sems.sem_op = -1;
 		sems.sem_flg = 0;
 		if(semop(sem,&sems,1) == -1) {
@@ -425,7 +425,7 @@ void ranita(int i, int madre) {
 
 		if((*movX) < 0 || (*movX) > 79)
 		{
-			sems.sem_num = 10;
+			sems.sem_num = 6;
 			sems.sem_op = 1;
 			sems.sem_flg = 0;
 			if(semop(sem,&sems,1) == -1) perror("\033[1;31mError en la memoria compartida (variable:sem)\033[0m\n");
@@ -444,7 +444,7 @@ void ranita(int i, int madre) {
 
 		if((*movY)==11) {
 
-			sems.sem_num = 10;
+			sems.sem_num = 6;
 			sems.sem_op = 1;
 			sems.sem_flg = 0;
 			if(semop(sem,&sems,1) == -1) perror("\033[1;31mError en la memoria compartida (variable:sem)\033[0m\n");
@@ -464,7 +464,7 @@ void ranita(int i, int madre) {
 			if(semop(sem,&sems,1)==-1) perror("\033[1;31mError semáforo de control de nacimiento de ranaMadre.\033[0m\n");
 		}
 
-		sems.sem_num = 10;
+		sems.sem_num = 6;
 		sems.sem_op = 1;
 		sems.sem_flg = 0;
 		if(semop(sem,&sems,1) == -1) perror("\033[1;31mError en la memoria compartida (variable:sem)\033[0m\n");
