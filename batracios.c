@@ -1,3 +1,11 @@
+/*
+Fichero: Batracios.c
+Integrantes del grupo:	Pablo Jesús González Rubio - i0894492
+												Sergio García González - i0921911
+Fecha de modificación: 30/03/2020
+*/
+
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -21,6 +29,7 @@ int noTerminado=1;
 struct sembuf sems;
 struct sigaction ac;
 
+// Unión necesario para la ejecución del programa en encina
 union semun {
 	int val;
 	struct semid_ds *buf;
@@ -28,8 +37,8 @@ union semun {
 
 /* ============= Funciones ============= */
 
-void rana(int i);
-void ranita (int j, int madre);
+void rana(int nRana);
+void crias(int nProcesos, int nRana);
 void intHandler(int a);
 void finPrograma();
 
@@ -39,7 +48,7 @@ int main (int argc, char*argv[]){
 	setlocale(LC_ALL, "");
 	int lTroncos[]={4,5,4,5,4,5,4},lAguas[]={5,4,3,5,3,4,5};
 	int dirs[]={1,0,1,0,1,0,1};
-	int i, j, z, param1, param2;
+	int nRana, nProcesos, nTroncos, param1, param2;
 	int *movX, *movY;
 	char errorLineaOrdenes[] = "USO: ./batracios VELOCIDAD VELOCIDAD_PARTO\n";
 	union semun sem1, sem2, sem3, sem4, sem5, sem6;
@@ -101,9 +110,9 @@ int main (int argc, char*argv[]){
 
 	/* ============= Inicialización de los punteros mov ============= */
 
-	for (j=0; j<25; j++) {
-		movX = (int*)(ptr+2048+j*8);
-		movY = (int*)(ptr+2048+j*8+4);
+	for (nProcesos=0; nProcesos<25; nProcesos++) {
+		movX = (int*)(ptr+2048+nProcesos*8);
+		movY = (int*)(ptr+2048+nProcesos*8+4);
 		*movX = -1;
 		*movY = -1;
 	}
@@ -174,9 +183,9 @@ int main (int argc, char*argv[]){
 		exit(5);
 	}
 
-	/* ============= Creación de las ranas y ranitas ============= */
+	/* ============= Creación de las ranas y ranitos ============= */
 
-	for(i=0; i<4; i++) {
+	for(nRana=0; nRana<4; nRana++) {
 
 		switch(fork()) {
 		case -1:
@@ -205,13 +214,13 @@ int main (int argc, char*argv[]){
 				exit(2);
 			}
 
-			rana(i);
+			rana(nRana);
 			exit(0);
 		}
 	}
 
 	while(noTerminado) {
-		for(z = 0; z < 7; z++) {
+		for(nTroncos = 0; nTroncos < 7; nTroncos++) {
 			sems.sem_num = 6;
 			sems.sem_op = -1;
 			sems.sem_flg = 0;
@@ -220,15 +229,15 @@ int main (int argc, char*argv[]){
 				perror("\033[1;31mError en la memoria compartida (variable:sem)\033[0m\n");
 			}
 
-			if(BATR_avance_troncos(z)==-1) perror("\033[1;31mError al avanzar los troncos.");
+			if(BATR_avance_troncos(nTroncos)==-1) perror("\033[1;31mError al avanzar los troncos.");
 
-			for(j=0; j<25; j++)
+			for(nProcesos=0; nProcesos<25; nProcesos++)
 			{
-				movX = (int*)(ptr+2048+j*8);
-				movY = (int*)(ptr+2048+j*8+4);
+				movX = (int*)(ptr+2048+nProcesos*8);
+				movY = (int*)(ptr+2048+nProcesos*8+4);
 
-				if((*movY) == 10-z) {
-					if(dirs[z]==0)
+				if((*movY) == 10-nTroncos) {
+					if(dirs[nTroncos]==0)
 						(*movX)++;
 					else
 						(*movX)--;
@@ -250,13 +259,13 @@ int main (int argc, char*argv[]){
 
 /* ============= Rana ============= */
 
-void rana(int i){
-	int j;
+void rana(int nRana){
+	int nProcesos;
 	int *movX, *movY; ptr = (char*) shmat(mem,NULL,0); ptr= (char*) shmat(mem,NULL,0);
 	while(noTerminado) {
 		BATR_descansar_criar();
 
-		sems.sem_num = i+2;
+		sems.sem_num = nRana+2;
 		sems.sem_op = -1;
 		sems.sem_flg = 0;
 		if(semop(sem,&sems,1)==-1) {
@@ -286,14 +295,14 @@ void rana(int i){
 		}
 
 		//Por qué no un 20? DEBUG
-		for(j=0; j<25; j++) {
+		for(nProcesos=0; nProcesos<25; nProcesos++) {
 			//2048?? DEBUG
-			movX=(int *)(ptr+2048+j*8);
-			movY=(int *)(ptr+2048+j*8+4);
+			movX=(int *)(ptr+2048+nProcesos*8);
+			movY=(int *)(ptr+2048+nProcesos*8+4);
 
 			if(*movY < 0) {
 
-				if(BATR_parto_ranas(i,movX,movY)==-1) perror("\033[1;31mError en la función: 'BATR_parto_ranas'.\033[0m\n");
+				if(BATR_parto_ranas(nRana,movX,movY)==-1) perror("\033[1;31mError en la función: 'BATR_parto_ranas'.\033[0m\n");
 				(*r_nacidas)++;
 
 				switch(fork()) {
@@ -319,7 +328,7 @@ void rana(int i){
 						perror("\033[1;31mError en la manejadora del SIGCHLD\033[0m\n");
 						exit(2);
 					}
-					ranita(j, i);
+					crias(nProcesos, nRana);
 					break;
 				}
 				ptr = (char*)shmat(mem,NULL,0);
@@ -327,7 +336,7 @@ void rana(int i){
 
 			}
 
-			if(j==24) {
+			if(nProcesos==24) {
 				sems.sem_num = 1;
 				sems.sem_op = 1;
 				sems.sem_flg = 0;
@@ -342,16 +351,16 @@ void rana(int i){
 	}
 }
 
-/* ============= Ranita ============= */
+/* ============= Crias ============= */
 
-void ranita(int i, int madre) {
+void crias(int nProcesos, int nRana) {
 
 	int sentido;
 	int *movX;
 	int *movY;
 	int nacimiento=0;
 
-	ptr= (char*) shmat(mem,NULL,0);
+	ptr = (char*) shmat(mem,NULL,0);
 
 	while(noTerminado)
 	{
@@ -364,8 +373,8 @@ void ranita(int i, int madre) {
 			perror("\033[1;31mError en la memoria compartida (variable:sem)\033[0m\n");
 		}
 
-		movX = (int*)(ptr+2048+i*8);
-		movY = (int*)(ptr+2048+i*8+4);
+		movX = (int*)(ptr+2048+nProcesos*8);
+		movY = (int*)(ptr+2048+nProcesos*8+4);
 
 		if((*movX) < 0 || (*movX) > 79)
 		{
@@ -418,8 +427,8 @@ void ranita(int i, int madre) {
 			perror("\033[1;31mError en la memoria compartida (variable:sem)\033[0m\n");
 		}
 
-		movX = (int*)(ptr+2048+i*8);
-		movY = (int*)(ptr+2048+i*8+4);
+		movX = (int*)(ptr+2048+nProcesos*8);
+		movY = (int*)(ptr+2048+nProcesos*8+4);
 
 		if((*movX) < 0 || (*movX) > 79)
 		{
@@ -456,7 +465,7 @@ void ranita(int i, int madre) {
 		if((*movY) == 1 && nacimiento == 0)
 		{
 			nacimiento = 1;
-			sems.sem_num = madre+2;
+			sems.sem_num = nRana+2;
 			sems.sem_op = 1;
 			sems.sem_flg = 0;
 			if(semop(sem,&sems,1)==-1) perror("\033[1;31mError semáforo de control de nacimiento de ranaMadre.\033[0m\n");
