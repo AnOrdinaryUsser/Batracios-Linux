@@ -1,9 +1,9 @@
 /*
-Fichero: Batracios.c
-Integrantes del grupo:	Pablo Jesús González Rubio - i0894492
-												Sergio García González - i0921911
-Fecha de modificación: 30/03/2020
-*/
+   Fichero: Batracios.c
+   Integrantes del grupo:	Pablo Jesús González Rubio - i0894492
+                        Sergio García González - i0921911
+   Fecha de modificación: 30/03/2020
+ */
 
 
 #include <stdio.h>
@@ -281,7 +281,7 @@ void rana(int nRana){
 			perror("\033[1;31mError en el semáforo de procesos máximos.\033[0m\n");
 		}
 
-		sems.sem_num =6;
+		sems.sem_num = 6;
 		sems.sem_op = -1;
 		sems.sem_flg = 0;
 		if(semop(sem,&sems,1) == -1) {
@@ -294,9 +294,7 @@ void rana(int nRana){
 			} perror("\033[1;31mError en la memoria compartida (variable:sem)\033[0m\n");
 		}
 
-		//Por qué no un 20? DEBUG
 		for(nProcesos=0; nProcesos<25; nProcesos++) {
-			//2048?? DEBUG
 			movX=(int *)(ptr+2048+nProcesos*8);
 			movY=(int *)(ptr+2048+nProcesos*8+4);
 
@@ -485,10 +483,13 @@ void crias(int nProcesos, int nRana) {
 	exit(0);
 }
 
+/* ============= Manejadora ============= */
 
 void intHandler(int a) {
 	noTerminado=0;
 }
+
+/* ============= finPrograma ============= */
 
 void finPrograma()
 {
