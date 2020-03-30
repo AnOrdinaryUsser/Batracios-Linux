@@ -261,7 +261,7 @@ int main (int argc, char*argv[]){
 
 void rana(int nRana){
 	int nProcesos;
-	int *movX, *movY; ptr = (char*) shmat(mem,NULL,0); ptr= (char*) shmat(mem,NULL,0);
+	int *movX, *movY; ptr = (char*) shmat(mem,NULL,0); 
 	while(noTerminado) {
 		BATR_descansar_criar();
 
