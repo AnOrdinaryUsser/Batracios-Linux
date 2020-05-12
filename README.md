@@ -31,7 +31,7 @@ El programa debe estar preparado para que, si el usuario pulsa las teclas CTRL+C
 
 Es probable que necesitéis semáforos o buzones para sincronizar adecuadamente la práctica. En ningún caso podréis usar en vuestras prácticas más de un array de semáforos, un buzón de paso de mensajes y una zona de memoria compartida. Se declarará un array de semáforos de tamaño adecuado a vuestros requerimientos, el primero de los cuales se reservará para el funcionamiento interno de la biblioteca. El resto, podéis usarlos libremente.
 
-La biblioteca requiere memoria compartida. Debéis declarar una única zona de memoria compartida en vuestro programa. Los 2048 bytes primeros de dicha zona estarán reservados para la biblioteca. Si necesitáis memoria compartida, reservad más cantidad y usadla a partir del byte bimilésimo cuadragésimo noveno.
+**La biblioteca requiere memoria compartida**. Debéis declarar una única zona de memoria compartida en vuestro programa. **Los 2048 bytes primeros de dicha zona estarán reservados para la biblioteca**. Si necesitáis memoria compartida, reservad más cantidad y usadla a partir del byte bimilésimo cuadragésimo noveno.
 
 Las funciones proporcionadas por la biblioteca libbatracios.a son las que a continuación aparecen. De no indicarse nada, las funciones devuelven -1 en caso de error o, si siendo funciones booleanas, el resultado es falso. Las funciones devuelven 0 en caso contrario:
 
@@ -212,7 +212,7 @@ Daos cuenta que lo que importa en el pseudocódigo es la sincronización. El res
   - La razón de esto es que habéis registrado la manejadora de SIGINT para todos los procesos. Al pulsar CTRL+C, la señal la reciben todos, el padre y los otros procesos. El primero que obtiene la CPU salta a su manejadora y borra los recursos. Cuando saltan los demás, intentan borrarlos, pero como ya están borrados, os da el error.
 
 - El compilador de encina tiene un bug. El error típicamente os va a ocurrir cuando defináis una variable entera en memoria compartida.
-  - Os va a dar Bus Error. Core dumped si no definís el puntero a esa variable apuntando a una dirección que sea múltiplo de cuatro. El puntero que os devuelve shmat, no obstante, siempre será una dirección múltiplo de cuatro, por lo que solo os tenéis que preocupar con que la dirección sea múltiplo de cuatro respecto al origen de la memoria compartida.
+  - Os va a dar Bus Error. Core dumped si no definís el puntero a esa variable apuntando a una dirección que sea múltiplo de cuatro. **El puntero que os devuelve shmat, no obstante, siempre será una dirección múltiplo de cuatro, por lo que solo os tenéis que preocupar con que la dirección sea múltiplo de cuatro respecto al origen de la memoria compartida**.
   - La razón se escapa un poco al nivel de este curso y tiene que ver con el alineamiento de direcciones de memoria en las instrucciones de acceso de palabras en el procesador RISC de encina.
 
 - Se os recuerda que, si ponéis señales para sincronizar esta práctica, la **nota bajará**. Usad semáforos, que son mejores para este cometido.
@@ -259,4 +259,4 @@ Daos cuenta que lo que importa en el pseudocódigo es la sincronización. El res
 
 - A algunos de vosotros se os produce un curioso error cuando contáis las ranas. Usáis memoria compartida para que los procesos puedan contar las ranas y, cuando la cuenta vale 127 y se incrementa, pasa a valer -128.
 
-  - El problema radica en que estáis usando punteros de tipo char para las cuentas. Un char se desborda al llegar a 127. Debéis usar punteros de tipo int y reservar cuatro bytes (mejor sería sizeof(int) bytes) de memoria compartida para cada uno de ellos.
+  - El problema radica en que estáis usando punteros de tipo char para las cuentas. **Un char se desborda al llegar a 127**. **Debéis usar punteros de tipo int y reservar cuatro bytes (mejor sería sizeof(int) bytes) de memoria compartida** para cada uno de ellos.
