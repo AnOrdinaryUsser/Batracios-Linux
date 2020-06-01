@@ -1,3 +1,11 @@
+# Nota Final: 9.8
+
+- Sergio García González y Pablo Jesús González Rubio.
+
+- Nos ha fallado:
+  - Tenemos 25 ranas en vez de 20, hay que reducir el valor de la variable de número máximo de procesos.
+  - Tenemos un cuello de botella al saltar las ranas porque saltan de 1 en 1 para que no se choquen.<br>Se puede arreglar modificando el movimiento mediante posiciones.
+
 
 # 1.- ENUNCIADO
 
